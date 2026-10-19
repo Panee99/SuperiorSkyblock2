@@ -13,12 +13,14 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 
+import java.util.Collection;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
@@ -26,6 +28,11 @@ public class GeneratorsListener implements Listener {
 
     private static final Material BASALT_MATERIAL = EnumHelper.getEnum(Material.class, "BASALT");
     private static final Material LAVA_MATERIAL = EnumHelper.getEnum(Material.class, "STATIONARY_LAVA", "LAVA");
+    private static final Material WATER_MATERIAL = EnumHelper.getEnum(Material.class, "STATIONARY_WATER", "WATER");
+    private static final Material FENCE_MATERIAL = EnumHelper.getEnum(Material.class, "OAK_FENCE", "FENCE");
+    private static final BlockFace[] nearbyFaces = new BlockFace[] {
+            BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.DOWN
+    };
 
     private final SuperiorSkyblockPlugin plugin;
 
@@ -89,10 +96,14 @@ public class GeneratorsListener implements Listener {
             if (island == null)
                 return;
 
-            if (e.getBlock().getType() != LAVA_MATERIAL)
-                return;
+            GeneratorType generatorType = GeneratorType.NONE;
 
-            GeneratorType generatorType = GeneratorType.detectGenerator(block);
+            if (e.getBlock().getType() == LAVA_MATERIAL) {
+                generatorType = GeneratorType.detectGenerator(block);
+            } else if (e.getBlock().getType() == WATER_MATERIAL && hasAdjacentBlockOfType(e.getToBlock(), FENCE_MATERIAL)) {
+                generatorType = GeneratorType.NORMAL;
+            }
+
             if (generatorType == GeneratorType.NONE)
                 return;
 
@@ -111,5 +122,13 @@ public class GeneratorsListener implements Listener {
         }
     }
 
+    private static boolean hasAdjacentBlockOfType(Block block, Material targetMaterial) {
+        for (BlockFace face : nearbyFaces) {
+            if (block.getRelative(face).getType() == targetMaterial) {
+                return true;
+            }
+        }
 
+    return false;
+}
 }
